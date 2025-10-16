@@ -2,17 +2,38 @@ import tkinter as tk
 from human import Human
 
 class SOSGUI:
-    def __init__(self, root, board_size):
+    def __init__(self, root):
         self.root = root
         self.root.title("SOS Game")
         self.root.resizable(False, False)
-        self.board_size = board_size
+        self.board_size = 3
         self.game = None
-        self.game_spaces = [[None for x in range(board_size)] for x in range(board_size)]
-        
+        self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
+        self.default_game_mode = tk.IntVar()
+        self.blue_player_type = tk.IntVar()
+        self.blue_letter_type = tk.IntVar()
+        self.red_player_type = tk.IntVar()
+        self.red_letter_type = tk.IntVar()
+
         self.player = tk.StringVar(value="Human")
         
         self.create_widgets()
+        
+    def set_board(self, main_frame):
+        board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
+        board_frame.pack(padx=25, pady=25)
+
+        for row in range(self.board_size):
+            new_frame = tk.Frame(board_frame)
+            new_frame.pack()
+            for column in range(self.board_size):
+                button = tk.Button(
+                    new_frame, text="", font=('Arial', 10, 'bold'),
+                    width=4, height=2,
+                    command=lambda row=row, column=column: self.blank_board_space_click(row, column)
+                )
+                button.pack(side="left")
+                self.game_spaces[row][column] = button
     
     def create_widgets(self):
         main_frame = tk.Frame(self.root)
@@ -24,11 +45,13 @@ class SOSGUI:
         
         game_type_label = tk.Label(top_frame, text="SOS", border=1, relief="solid", font=("TkDefaultFont", 20) )
         game_type_label.pack(side="left")
-
-        simple_game_radio_button = tk.Radiobutton(top_frame, text="Simple Game", value=1, variable="game mode")
+        
+        self.default_game_mode.set(1)
+        
+        simple_game_radio_button = tk.Radiobutton(top_frame, text="Simple Game", value=1, variable=self.default_game_mode)
         simple_game_radio_button.pack(side="left")
 
-        general_game_radio_button = tk.Radiobutton(top_frame, text="General Game", value=2, variable="game mode")
+        general_game_radio_button = tk.Radiobutton(top_frame, text="General Game", value=2, variable=self.default_game_mode)
         general_game_radio_button.pack(side="left")
         
         # frame that hold the label and the entry for the board Size
@@ -51,14 +74,17 @@ class SOSGUI:
 
         blue_player_label = tk.Label(left_frame, text="Blue Player")
         blue_player_label.pack()
+        
+        self.blue_player_type.set(1)
+        self.blue_letter_type.set(1)
 
-        blue_human = tk.Radiobutton(left_frame, text="Human", value=1, variable="blue player type")
+        blue_human = tk.Radiobutton(left_frame, text="Human", value=1, variable=self.blue_player_type)
         blue_human.pack()
-        blue_o = tk.Radiobutton(left_frame, text="O", value=1, variable="blue letter type")
+        blue_o = tk.Radiobutton(left_frame, text="O", value=1, variable=self.blue_letter_type)
         blue_o.pack()
-        blue_s = tk.Radiobutton(left_frame, text="S", value=2, variable="blue letter type")
+        blue_s = tk.Radiobutton(left_frame, text="S", value=2, variable=self.blue_letter_type)
         blue_s.pack()
-        blue_computer = tk.Radiobutton(left_frame, text="Computer", value=2, variable="blue player type")
+        blue_computer = tk.Radiobutton(left_frame, text="Computer", value=2, variable=self.blue_player_type)
         blue_computer.pack()# <-} #
         
         
@@ -71,32 +97,23 @@ class SOSGUI:
         red_player_label = tk.Label(right_frame, text="Red Player")
         red_player_label.pack()
 
-        red_human = tk.Radiobutton(right_frame, text="Human", value=1, variable="red player type")
+        self.red_player_type.set(1)
+        self.red_letter_type.set(2)
+
+        red_human = tk.Radiobutton(right_frame, text="Human", value=1, variable=self.red_player_type)
         red_human.pack()
-        red_o = tk.Radiobutton(right_frame, text="O", value=1, variable="red letter type")
+        red_o = tk.Radiobutton(right_frame, text="O", value=1, variable=self.red_letter_type)
         red_o.pack()
-        red_s = tk.Radiobutton(right_frame, text="S", value=2, variable="red letter type")
+        red_s = tk.Radiobutton(right_frame, text="S", value=2, variable=self.red_letter_type)
         red_s.pack()
-        red_computer = tk.Radiobutton(right_frame, text="Computer", value=2, variable="red player type")
+        red_computer = tk.Radiobutton(right_frame, text="Computer", value=2, variable=self.red_player_type)
         red_computer.pack()# <-} #
         
         # frame that holds everything for the game board
-        board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
-        board_frame.pack()
-
-        for row in range(self.board_size):
-            new_frame = tk.Frame(board_frame)
-            new_frame.pack()
-            for column in range(self.board_size):
-                button = tk.Button(
-                    new_frame, text="", font=('Arial', 10, 'bold'),
-                    width=4, height=2,
-                    command=lambda row=row, column=column: self.blank_board_space_click(row, column)
-                ).pack(side="left")
-                self.game_spaces[row][column] = button
-                
         
-
+        self.set_board(main_frame)
+                
+    
         # frame that holds everything at the bottom
         bottom_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")# {-> # child of root frame
         bottom_frame.pack(side="bottom", fill="x")
@@ -115,4 +132,6 @@ class SOSGUI:
         # <-} #
         
     def blank_board_space_click(self, row, column):
-        pass
+        space = self.game_spaces[row][column]
+        space.config(text=f"({row}, {column})")
+        
