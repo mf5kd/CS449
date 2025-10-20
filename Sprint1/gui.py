@@ -4,18 +4,21 @@ from human import Human
 class SOSGUI:
     def __init__(self, root):
         self.root = root
+        self.board_size_entry = None
+        self.board_frame = None
+        
         self.root.title("SOS Game")
-        #self.root.resizable(False, False)
+        # self.root.resizable(False, False)
         self.board_size = 3
         self.game = None
         self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
+        
         self.default_game_mode = tk.IntVar()
         self.blue_player_type = tk.IntVar()
         self.blue_letter_type = tk.IntVar()
         self.red_player_type = tk.IntVar()
         self.red_letter_type = tk.IntVar()
-        self.board_size_entry = None
-        self.board_frame = None
+
 
         self.player = tk.StringVar(value="Human")
         
@@ -90,13 +93,11 @@ class SOSGUI:
         red_computer = tk.Radiobutton(right_frame, text="Computer", value=2, variable=self.red_player_type)
         red_computer.pack()# <-} #
         
-    def set_board(self, main_frame):
+    def set_board(self, board_frame):
         # frame that holds everything for the game board
-        self.board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
-        self.board_frame.pack(padx=25, pady=25)
 
         for row in range(self.board_size):
-            new_frame = tk.Frame(self.board_frame)
+            new_frame = tk.Frame(board_frame)
             new_frame.pack()
             for column in range(self.board_size):
                 button = tk.Button(
@@ -128,10 +129,17 @@ class SOSGUI:
     def create_widgets(self):
         main_frame = tk.Frame(self.root)
         main_frame.pack()
+        
         self.create_top_widgets(main_frame)
+        
         self.create_left_widgets(main_frame)
+        
         self.create_right_widgets(main_frame)
-        self.set_board(main_frame)
+        
+        self.board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
+        self.board_frame.pack(padx=25, pady=25)
+        self.set_board(self.board_frame)
+        
         self.create_bottom_widgets(main_frame)
                 
     
@@ -141,9 +149,11 @@ class SOSGUI:
         space.config(text=f"({row}, {column})")
         
     def start_game(self):
+        for widget in self.board_frame.winfo_children():
+            widget.destroy()
         self.board_size = int(self.board_size_entry.get())
         self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
-        self.set_board(self.root)
+        self.set_board(self.board_frame)
         for row in self.game_spaces:
             for button in row:
                 button.config(state=tk.NORMAL)
