@@ -1,11 +1,13 @@
 import tkinter as tk
 from human import Human
+from game import Game
 
 class SOSGUI:
     def __init__(self, root):
         self.root = root
         self.board_size_entry = None
         self.board_frame = None
+        self.current_turn_label = None
         
         self.root.title("SOS Game")
         # self.root.resizable(False, False)
@@ -19,6 +21,7 @@ class SOSGUI:
         self.red_player_type = tk.IntVar()
         self.red_letter_type = tk.IntVar()
 
+        self.current_game = None
 
         self.player = tk.StringVar(value="Human")
         
@@ -75,7 +78,7 @@ class SOSGUI:
         # frame that hold things to the right
         # holds that check buttons for where red is a human or computer
         # what letter they are placing
-        right_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")# {-> # is a child of the root frame
+        right_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
         right_frame.pack(side="right", fill="y")
 
         red_player_label = tk.Label(right_frame, text="Red Player")
@@ -91,7 +94,7 @@ class SOSGUI:
         red_s = tk.Radiobutton(right_frame, text="S", value=2, variable=self.red_letter_type)
         red_s.pack()
         red_computer = tk.Radiobutton(right_frame, text="Computer", value=2, variable=self.red_player_type)
-        red_computer.pack()# <-} #
+        red_computer.pack()
         
     def set_board(self, board_frame):
         # frame that holds everything for the game board
@@ -117,8 +120,8 @@ class SOSGUI:
         record_game_check_button = tk.Checkbutton(bottom_frame, text="Record Game")
         record_game_check_button.pack(side="top")
 
-        current_turn_label = tk.Label(bottom_frame, text="Current Turn blue or red", )
-        current_turn_label.pack(side="top")
+        self.current_turn_label = tk.Label(bottom_frame, text="Current Turn blue or red When game starts", )
+        self.current_turn_label.pack(side="top")
 
         replay_game_button = tk.Button(bottom_frame, text="Replay Game", background="light gray")
         replay_game_button.pack(side="top")
@@ -143,19 +146,28 @@ class SOSGUI:
         self.create_bottom_widgets(main_frame)
                 
     
-        
     def blank_board_space_click(self, row, column):
         space = self.game_spaces[row][column]
-        space.config(text=f"({row}, {column})")
+        self.current_game.player_move(row, column)
+        space.config(text=self.current_game.get_current_player().get_symbol().upper())
+        self.current_game.change_player()
         
     def start_game(self):
+        # clears board the board so that the new board size can be set
         for widget in self.board_frame.winfo_children():
             widget.destroy()
         self.board_size = int(self.board_size_entry.get())
         self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
+        
+        # set the new board with new size and enables the buttons
         self.set_board(self.board_frame)
         for row in self.game_spaces:
             for button in row:
                 button.config(state=tk.NORMAL)
                 
+        self.current_game = Game(Human("s", "blue"), Human("o", "red"), self.board_size, "simple")
+                
+        
+    def refreash_game_board():
+        pass
         
