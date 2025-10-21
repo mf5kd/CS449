@@ -10,8 +10,6 @@ class SOSGUI:
         self.board_frame = None
         self.current_turn_label = None
         
-        self.root.title("SOS Game")
-        
         # holds board size
         # holds the button of the game board in a list of list of buttons
         self.board_size = 3
@@ -104,7 +102,6 @@ class SOSGUI:
         
     def set_board(self, board_frame):
         # frame that holds everything for the game board
-
         for row in range(self.board_size):
             new_frame = tk.Frame(board_frame)
             new_frame.pack()
@@ -126,7 +123,7 @@ class SOSGUI:
         record_game_check_button = tk.Checkbutton(bottom_frame, text="Record Game")
         record_game_check_button.pack(side="top")
 
-        self.current_turn_label = tk.Label(bottom_frame, text="Current Turn blue or red When game starts", )
+        self.current_turn_label = tk.Label(bottom_frame, text="PRESS 'NEW GAME' TO START", )
         self.current_turn_label.pack(side="top")
 
         replay_game_button = tk.Button(bottom_frame, text="Replay Game", background="light gray")
@@ -146,7 +143,7 @@ class SOSGUI:
         self.create_right_widgets(main_frame)
         
         self.board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
-        self.board_frame.pack()
+        self.board_frame.pack(padx=25, pady=25)
         self.set_board(self.board_frame)
         
         self.create_bottom_widgets(main_frame)
@@ -165,10 +162,19 @@ class SOSGUI:
         if self.current_game.check_win():
             self.end_game("WINNER")
             return
-        else:
-            if self.current_game.check_draw():
+        elif self.current_game.check_draw():
+            if self.default_game_mode.get() == 1:
                 self.end_game("DRAW")
                 return
+            else:
+                winner = self.current_game.get_winner()
+                if winner == None:
+                    self.end_game("DRAW")
+                    return
+                else:
+                    self.end_game("WINNER")
+                    return
+
         
         self.current_game.change_player()
         self.current_turn_label.config(
@@ -190,6 +196,7 @@ class SOSGUI:
                 
         self.blue_player = Human(self.blue_letter_type.get(), "blue")
         self.red_player = Human(self.red_letter_type.get(), "red")
+        
         if self.default_game_mode.get() == 1:
             self.current_game = Game(self.blue_player, self.red_player, self.board_size)
         else:
