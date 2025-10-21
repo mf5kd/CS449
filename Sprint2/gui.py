@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from human import Human
 from game import Game
 from game_general import General
@@ -182,29 +183,39 @@ class SOSGUI:
         )
         
     def start_game(self):
-        # clears board the board so that the new board size can be set
-        for widget in self.board_frame.winfo_children():
-            widget.destroy()
-        self.board_size = int(self.board_size_entry.get())
-        self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
-        
-        # set the new board with new size and enables the buttons
-        self.set_board(self.board_frame)
-        for row in self.game_spaces:
-            for button in row:
-                button.config(state=tk.NORMAL)
-                
-        self.blue_player = Human(self.blue_letter_type.get(), "blue")
-        self.red_player = Human(self.red_letter_type.get(), "red")
-        
-        if self.default_game_mode.get() == 1:
-            self.current_game = Game(self.blue_player, self.red_player, self.board_size)
-        else:
-            self.current_game = General(self.blue_player, self.red_player, self.board_size)
-        
-        self.current_turn_label.config(
-            text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
-        )
+        try:
+            # gets board size
+            self.board_size = int(self.board_size_entry.get())
+            # check to make sure board size is value 
+            # raise error if not
+            if self.board_size < 3:
+                raise ValueError
+            
+            # clears board the board so that the new board size can be set
+            for widget in self.board_frame.winfo_children():
+                widget.destroy()
+
+            self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
+            
+            # set the new board with new size and enables the buttons
+            self.set_board(self.board_frame)
+            for row in self.game_spaces:
+                for button in row:
+                    button.config(state=tk.NORMAL)
+                    
+            self.blue_player = Human(self.blue_letter_type.get(), "blue")
+            self.red_player = Human(self.red_letter_type.get(), "red")
+            
+            if self.default_game_mode.get() == 1:
+                self.current_game = Game(self.blue_player, self.red_player, self.board_size)
+            else:
+                self.current_game = General(self.blue_player, self.red_player, self.board_size)
+            
+            self.current_turn_label.config(
+                text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
+            )
+        except ValueError:
+            self.error_message()
     
     def end_game(self, end_type):
         for row in self.game_spaces:
@@ -219,3 +230,7 @@ class SOSGUI:
             self.current_turn_label.config(
                 text = f"THE GAME IS A DRAW"
             )
+            
+            
+    def error_message(self):
+        messagebox.showerror("ERROR", "The Game Board need to have a board Size 3 OR GREATER")
