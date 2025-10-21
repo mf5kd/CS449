@@ -1,6 +1,7 @@
 import tkinter as tk
 from human import Human
 from game import Game
+from game_general import General
 
 class SOSGUI:
     def __init__(self, root):
@@ -10,20 +11,25 @@ class SOSGUI:
         self.current_turn_label = None
         
         self.root.title("SOS Game")
-        # self.root.resizable(False, False)
+        
+        # holds board size
+        # holds the button of the game board in a list of list of buttons
         self.board_size = 3
-        self.game = None
         self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
         
+        # has the values for what gamemode(simple, general) is choose
+        # also has the of blue and red players type(human, computer) and there letter(S, O)
         self.default_game_mode = tk.IntVar()
         self.blue_player_type = tk.IntVar()
         self.blue_letter_type = tk.IntVar()
         self.red_player_type = tk.IntVar()
         self.red_letter_type = tk.IntVar()
 
+        # holds the current game, blue player, red player object
         self.current_game = None
+        self.blue_player = None
+        self.red_player = None
 
-        self.player = tk.StringVar(value="Human")
         
         self.create_widgets()
         
@@ -67,10 +73,10 @@ class SOSGUI:
 
         blue_human = tk.Radiobutton(left_frame, text="Human", value=1, variable=self.blue_player_type)
         blue_human.pack()
-        blue_o = tk.Radiobutton(left_frame, text="O", value=1, variable=self.blue_letter_type)
-        blue_o.pack()
-        blue_s = tk.Radiobutton(left_frame, text="S", value=2, variable=self.blue_letter_type)
+        blue_s = tk.Radiobutton(left_frame, text="S", value=1, variable=self.blue_letter_type)
         blue_s.pack()
+        blue_o = tk.Radiobutton(left_frame, text="O", value=2, variable=self.blue_letter_type)
+        blue_o.pack()
         blue_computer = tk.Radiobutton(left_frame, text="Computer", value=2, variable=self.blue_player_type)
         blue_computer.pack()
         
@@ -89,10 +95,10 @@ class SOSGUI:
 
         red_human = tk.Radiobutton(right_frame, text="Human", value=1, variable=self.red_player_type)
         red_human.pack()
-        red_o = tk.Radiobutton(right_frame, text="O", value=1, variable=self.red_letter_type)
-        red_o.pack()
-        red_s = tk.Radiobutton(right_frame, text="S", value=2, variable=self.red_letter_type)
+        red_s = tk.Radiobutton(right_frame, text="S", value=1, variable=self.red_letter_type)
         red_s.pack()
+        red_o = tk.Radiobutton(right_frame, text="O", value=2, variable=self.red_letter_type)
+        red_o.pack()
         red_computer = tk.Radiobutton(right_frame, text="Computer", value=2, variable=self.red_player_type)
         red_computer.pack()
         
@@ -140,7 +146,7 @@ class SOSGUI:
         self.create_right_widgets(main_frame)
         
         self.board_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
-        self.board_frame.pack(padx=25, pady=25)
+        self.board_frame.pack()
         self.set_board(self.board_frame)
         
         self.create_bottom_widgets(main_frame)
@@ -148,9 +154,26 @@ class SOSGUI:
     
     def blank_board_space_click(self, row, column):
         space = self.game_spaces[row][column]
+        self.blue_player.set_symbol(self.blue_letter_type.get())
+        self.red_player.set_symbol(self.red_letter_type.get())
         self.current_game.player_move(row, column)
-        space.config(text=self.current_game.get_current_player().get_symbol().upper())
+        space.config(
+            text = self.current_game.get_current_player().get_symbol().upper(),
+            state = tk.DISABLED
+        )
+        
+        if self.current_game.check_win():
+            self.end_game("WINNER")
+            return
+        else:
+            if self.current_game.check_draw():
+                self.end_game("DRAW")
+                return
+        
         self.current_game.change_player()
+        self.current_turn_label.config(
+            text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
+        )
         
     def start_game(self):
         # clears board the board so that the new board size can be set
@@ -165,9 +188,27 @@ class SOSGUI:
             for button in row:
                 button.config(state=tk.NORMAL)
                 
-        self.current_game = Game(Human("s", "blue"), Human("o", "red"), self.board_size, "simple")
-                
+        self.blue_player = Human(self.blue_letter_type.get(), "blue")
+        self.red_player = Human(self.red_letter_type.get(), "red")
+        if self.default_game_mode.get() == 1:
+            self.current_game = Game(self.blue_player, self.red_player, self.board_size)
+        else:
+            self.current_game = General(self.blue_player, self.red_player, self.board_size)
         
-    def refreash_game_board():
-        pass
-        
+        self.current_turn_label.config(
+            text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
+        )
+    
+    def end_game(self, end_type):
+        for row in self.game_spaces:
+            for button in row:
+                button.config(state=tk.DISABLED)
+
+        if end_type == "WINNER":
+            self.current_turn_label.config(
+                text = f"{self.current_game.get_winner().get_color().upper()} IS THE WINNER"
+            )
+        else:
+            self.current_turn_label.config(
+                text = f"THE GAME IS A DRAW"
+            )
