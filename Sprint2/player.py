@@ -1,3 +1,5 @@
+# Main Class of the player 
+# Human and computer inherit from this class
 class Player:
     def __init__(self, symbol, color):
         # symbol will be either "s" or "o"
@@ -7,7 +9,8 @@ class Player:
             self.symbol = "O"
         # color will be red or blue
         self.color = color
-        
+    
+    # getter and setter
     def get_symbol(self):
         return self.symbol
     

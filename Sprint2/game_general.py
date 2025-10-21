@@ -1,17 +1,22 @@
 from game import Game
 
+# Class for the general Game 
+# inherits from game
 class General(Game):
     def __init__(self, blue_player, red_player, board_size):
         super().__init__(blue_player, red_player, board_size)
         self.blue_score = 0
         self.red_score = 0
 
+        # stores the point conditions 
+        # as what counts as a point
         self.directions = [
             (-1, -1), (-1, 0), (-1, 1),
             (0, -1),           (0, 1),
             (1, -1),  (1, 0),  (1, 1)
         ]
 
+    # Overloaded function
     def player_move(self, row, column):
         move_was_valid = super().player_move(row, column)
         
@@ -19,7 +24,8 @@ class General(Game):
             self.update_score_from_move(row, column)
             
         return move_was_valid
-        
+      
+    # update the current score of the players  
     def update_score_from_move(self, row, column):
         symbol_placed = self.game_board[row][column]
         points_scored = 0
