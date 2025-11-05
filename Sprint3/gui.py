@@ -164,7 +164,8 @@ class SOSGUI:
         # then disables the space so it can not be reclicked
         space.config(
             text = self.current_game.get_current_player().get_symbol().upper(),
-            state = tk.DISABLED
+            state = tk.DISABLED,
+            disabledforeground = "black"
         )
         
         # check if the game as been won for both the simple game and general game 
