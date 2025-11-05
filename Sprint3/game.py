@@ -1,5 +1,8 @@
 # Class for the simple game 
 # General inherits from this class
+import re
+
+
 class Game:
     # class takes two players and the size of the board
     def __init__(self, blue_player, red_player, board_size):
@@ -10,7 +13,9 @@ class Game:
         
         self.game_board = [[" " for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.winner = None
-    
+        # holds the the location of the wining SOS
+        self.winning_coords = []
+
     # changes the current player
     def change_player(self):
         if self.current_player == self.blue_player:
@@ -53,6 +58,13 @@ class Game:
                                 self.game_board[row_two][column_two] == 'S'):
 
                                 self.winner = self.current_player
+                                
+                                self.winning_coords = [
+                                    (row_one, column_one),
+                                    (row, column),
+                                    (row_two, column_two)
+                                ]
+
                                 return True # if the is a win 
         return False # if there is no win
     
@@ -76,3 +88,7 @@ class Game:
     
     def get_winner(self):
         return self.winner
+
+    def get_winning_coords(self):
+        return self.winning_coords
+    

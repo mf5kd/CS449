@@ -148,31 +148,66 @@ class SOSGUI:
         self.set_board(self.board_frame)
         
         self.create_bottom_widgets(main_frame)
-                
-    
-    def blank_board_space_click(self, row, column):
-        space = self.game_spaces[row][column]
+
+    def update_board_display(self, is_win, game_mode):
+        game_board = self.current_game.game_board
         
+        color_data = None
+        winner_color = ""
+        if game_mode == 1 and is_win:
+            color_data = self.current_game.get_winning_coords()
+            winner_color = self.current_game.get_winner().get_color()
+        elif game_mode == 2:
+            color_data = self.current_game.get_color_board()
+
+        for row in range(self.board_size):
+            for column in range(self.board_size):
+                button = self.game_spaces[row][column]
+                symbol = game_board[row][column]
+                
+                if symbol == " ":
+                    if not is_win and not self.current_game.check_draw():
+                        button.config(text="", state=tk.NORMAL)
+                    continue
+
+                button.config(text=symbol, state=tk.DISABLED)
+                
+                final_color = "black"                 
+                if game_mode == 1 and is_win:
+                    if (row, column) in color_data:
+                        final_color = winner_color
+                elif game_mode == 2:
+                    sos_color = color_data[row][column]
+                    if sos_color:
+                        final_color = sos_color
+                        
+                button.config(disabledforeground=final_color)
+
+    def blank_board_space_click(self, row, column):
         # sets they symbol for the blue and red player 
         self.blue_player.set_symbol(self.blue_letter_type.get())
         self.red_player.set_symbol(self.red_letter_type.get())
     
         # runs the current players moves
-        self.current_game.player_move(row, column)
+        move_made = self.current_game.player_move(row, column)
         
-        # set the buttons symbol according to the players move
-        # then disables the space so it can not be reclicked
-        space.config(
-            text = self.current_game.get_current_player().get_symbol().upper(),
-            state = tk.DISABLED,
-            disabledforeground = "black"
-        )
+        # If the move was invalid, do nothing
+        if not move_made:
+            return
+
+        # check game state
+        game_mode = self.default_game_mode.get()
+        is_win = self.current_game.check_win()
+        is_draw = self.current_game.check_draw()
+
+        # Update the board display
+        self.update_board_display(is_win, game_mode)
         
         # check if the game as been won for both the simple game and general game 
-        if self.current_game.check_win():
+        if is_win:
             self.end_game("WINNER")
             return
-        elif self.current_game.check_draw():
+        elif is_draw:
             if self.default_game_mode.get() == 1:
                 self.end_game("DRAW")
                 return
@@ -185,7 +220,7 @@ class SOSGUI:
                     self.end_game("WINNER")
                     return
 
-        
+        # Change player
         self.current_game.change_player()
         self.current_turn_label.config(
             text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
@@ -210,7 +245,7 @@ class SOSGUI:
             self.set_board(self.board_frame)
             for row in self.game_spaces:
                 for button in row:
-                    button.config(state=tk.NORMAL)
+                    button.config(state=tk.NORMAL, text="")
                     
             self.blue_player = Human(self.blue_letter_type.get(), "blue")
             self.red_player = Human(self.red_letter_type.get(), "red")
