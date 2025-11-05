@@ -14,7 +14,7 @@ class SOSGUI:
         # holds board size
         # holds the button of the game board in a list of list of buttons
         self.board_size = 3
-        self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
+        self.game_spaces = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
         
         # has the values for what gamemode(simple, general) is choose
         # also has the of blue and red players type(human, computer) and there letter(S, O)
@@ -152,14 +152,22 @@ class SOSGUI:
     
     def blank_board_space_click(self, row, column):
         space = self.game_spaces[row][column]
+        
+        # sets they symbol for the blue and red player 
         self.blue_player.set_symbol(self.blue_letter_type.get())
         self.red_player.set_symbol(self.red_letter_type.get())
+    
+        # runs the current players moves
         self.current_game.player_move(row, column)
+        
+        # set the buttons symbol according to the players move
+        # then disables the space so it can not be reclicked
         space.config(
             text = self.current_game.get_current_player().get_symbol().upper(),
             state = tk.DISABLED
         )
         
+        # check if the game as been won for both the simple game and general game 
         if self.current_game.check_win():
             self.end_game("WINNER")
             return

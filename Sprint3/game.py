@@ -7,7 +7,8 @@ class Game:
         self.red_player = red_player
         self.board_size = board_size
         self.current_player = blue_player
-        self.game_board = [[" " for x in range(self.board_size)] for x in range(self.board_size)]
+        
+        self.game_board = [[" " for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.winner = None
     
     # changes the current player
