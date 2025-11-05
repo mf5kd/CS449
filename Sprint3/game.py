@@ -91,4 +91,3 @@ class Game:
 
     def get_winning_coords(self):
         return self.winning_coords
-    

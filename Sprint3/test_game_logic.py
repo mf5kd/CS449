@@ -4,9 +4,9 @@ from gui import SOSGUI
 from game import Game
 from game_general import General
 from human import Human
+from controller import GameController
 
 class TestGameLogic(unittest.TestCase):
-
     def setUp(self):
         self.blue_player = Human(1, "blue") # Starts with 'S'
         self.red_player = Human(2, "red")   # Starts with 'O'
@@ -14,7 +14,9 @@ class TestGameLogic(unittest.TestCase):
         # Create root and GUI for each test (without showing window)
         self.root = tk.Tk()
         self.root.withdraw()  # hide window during tests
-        self.app = SOSGUI(self.root)
+        self.controller = GameController()
+        self.app = SOSGUI(self.root, self.controller)
+        self.controller.set_view(self.app)
 
     def tearDown(self):
         self.root.destroy()
@@ -23,8 +25,8 @@ class TestGameLogic(unittest.TestCase):
     def test_valid_board_size_starts_game(self):
         self.app.board_size_entry.insert(0, "5")
         self.app.default_game_mode.set(1)  # Simple game
-        self.app.start_game()
-        self.assertIsInstance(self.app.current_game, Game)
+        self.controller.start_new_game()
+        self.assertIsInstance(self.controller.current_game, Game)
         self.assertEqual(self.app.board_size, 5)
         self.assertEqual(len(self.app.game_spaces), 5)
         self.assertEqual(len(self.app.game_spaces[0]), 5)
@@ -40,7 +42,7 @@ class TestGameLogic(unittest.TestCase):
         from tkinter import messagebox
         messagebox.showerror = mock_error
 
-        self.app.start_game()
+        self.controller.start_new_game()
         self.assertIn("title", called)
         self.assertIn("Board", called["message"])
 
@@ -48,16 +50,16 @@ class TestGameLogic(unittest.TestCase):
     def test_simple_game_mode_creates_game(self):
         self.app.board_size_entry.insert(0, "3")
         self.app.default_game_mode.set(1)
-        self.app.start_game()
-        self.assertIsInstance(self.app.current_game, Game)
-        self.assertNotIsInstance(self.app.current_game, General)
+        self.controller.start_new_game()
+        self.assertIsInstance(self.controller.current_game, Game)
+        self.assertNotIsInstance(self.controller.current_game, General)
 
     # --- AC 2.2 General game chosen ---
     def test_general_game_mode_creates_general_game(self):
         self.app.board_size_entry.insert(0, "4")
         self.app.default_game_mode.set(2)
-        self.app.start_game()
-        self.assertIsInstance(self.app.current_game, General)
+        self.controller.start_new_game()
+        self.assertIsInstance(self.controller.current_game, General)
 
     # US 3: Start a new game
     # AC 3.1: A new game starts
@@ -206,7 +208,6 @@ class TestGameLogic(unittest.TestCase):
 
         game.check_draw()
         self.assertIsNone(game.get_winner())
-
 
 if __name__ == '__main__':
     unittest.main()
