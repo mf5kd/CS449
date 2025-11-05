@@ -1,12 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox
-from human import Human
-from game import Game
-from game_general import General
 
 class SOSGUI:
-    def __init__(self, root):
+    def __init__(self, root, controller):
         self.root = root
+        self.controller = controller
         self.board_size_entry = None
         self.board_frame = None
         self.current_turn_label = None
@@ -23,11 +21,6 @@ class SOSGUI:
         self.blue_letter_type = tk.IntVar()
         self.red_player_type = tk.IntVar()
         self.red_letter_type = tk.IntVar()
-
-        # holds the current game, blue player, red player object
-        self.current_game = None
-        self.blue_player = None
-        self.red_player = None
 
         
         self.create_widgets()
@@ -110,7 +103,7 @@ class SOSGUI:
                 button = tk.Button(
                     new_frame, text="", font=('Arial', 10, 'bold'),
                     width=4, height=2,
-                    command=lambda row=row, column=column: self.blank_board_space_click(row, column),
+                    command=lambda row=row, column=column: self.controller.handle_board_click(row, column),
                     state=tk.DISABLED
                 )
                 button.pack(side="left")
@@ -130,7 +123,7 @@ class SOSGUI:
         replay_game_button = tk.Button(bottom_frame, text="Replay Game", background="light gray")
         replay_game_button.pack(side="top")
 
-        new_game_button = tk.Button(bottom_frame, text="New Game", background="light gray", command=self.start_game)
+        new_game_button = tk.Button(bottom_frame, text="New Game", background="light gray", command=self.controller.start_new_game)
         new_game_button.pack(side="top")
     
     def create_widgets(self):
@@ -150,15 +143,20 @@ class SOSGUI:
         self.create_bottom_widgets(main_frame)
 
     def update_board_display(self, is_win, game_mode):
-        game_board = self.current_game.game_board
+        game = self.controller.current_game
+        
+        if not game:
+            return
+
+        game_board = game.game_board
         
         color_data = None
         winner_color = ""
         if game_mode == 1 and is_win:
-            color_data = self.current_game.get_winning_coords()
-            winner_color = self.current_game.get_winner().get_color()
+            color_data = game.get_winning_coords()
+            winner_color = game.get_winner().get_color()
         elif game_mode == 2:
-            color_data = self.current_game.get_color_board()
+            color_data = game.get_color_board()
 
         for row in range(self.board_size):
             for column in range(self.board_size):
@@ -166,7 +164,7 @@ class SOSGUI:
                 symbol = game_board[row][column]
                 
                 if symbol == " ":
-                    if not is_win and not self.current_game.check_draw():
+                    if not is_win and not game.check_draw():
                         button.config(text="", state=tk.NORMAL)
                     continue
 
@@ -183,98 +181,44 @@ class SOSGUI:
                         
                 button.config(disabledforeground=final_color)
 
-    def blank_board_space_click(self, row, column):
-        # sets they symbol for the blue and red player 
-        self.blue_player.set_symbol(self.blue_letter_type.get())
-        self.red_player.set_symbol(self.red_letter_type.get())
-    
-        # runs the current players moves
-        move_made = self.current_game.player_move(row, column)
+    def reset_board(self, board_size):
+        self.board_size = board_size
+        for widget in self.board_frame.winfo_children():
+            widget.destroy()
+
+        self.game_spaces = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
         
-        # If the move was invalid, do nothing
-        if not move_made:
-            return
-
-        # check game state
-        game_mode = self.default_game_mode.get()
-        is_win = self.current_game.check_win()
-        is_draw = self.current_game.check_draw()
-
-        # Update the board display
-        self.update_board_display(is_win, game_mode)
-        
-        # check if the game as been won for both the simple game and general game 
-        if is_win:
-            self.end_game("WINNER")
-            return
-        elif is_draw:
-            if self.default_game_mode.get() == 1:
-                self.end_game("DRAW")
-                return
-            else:
-                winner = self.current_game.get_winner()
-                if winner == None:
-                    self.end_game("DRAW")
-                    return
-                else:
-                    self.end_game("WINNER")
-                    return
-
-        # Change player
-        self.current_game.change_player()
-        self.current_turn_label.config(
-            text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
-        )
-        
-    def start_game(self):
-        try:
-            # gets board size
-            self.board_size = int(self.board_size_entry.get())
-            # check to make sure board size is value 
-            # raise error if not
-            if self.board_size < 3:
-                raise ValueError
-            
-            # clears board the board so that the new board size can be set
-            for widget in self.board_frame.winfo_children():
-                widget.destroy()
-
-            self.game_spaces = [[None for x in range(self.board_size)] for x in range(self.board_size)]
-            
-            # set the new board with new size and enables the buttons
-            self.set_board(self.board_frame)
-            for row in self.game_spaces:
-                for button in row:
-                    button.config(state=tk.NORMAL, text="")
-                    
-            self.blue_player = Human(self.blue_letter_type.get(), "blue")
-            self.red_player = Human(self.red_letter_type.get(), "red")
-            
-            if self.default_game_mode.get() == 1:
-                self.current_game = Game(self.blue_player, self.red_player, self.board_size)
-            else:
-                self.current_game = General(self.blue_player, self.red_player, self.board_size)
-            
-            self.current_turn_label.config(
-                text = f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
-            )
-        except ValueError:
-            self.error_message()
-    
-    def end_game(self, end_type):
+        self.set_board(self.board_frame)
+        for row in self.game_spaces:
+            for button in row:
+                button.config(state=tk.NORMAL, text="")
+                
+    def disable_board(self):
         for row in self.game_spaces:
             for button in row:
                 button.config(state=tk.DISABLED)
 
-        if end_type == "WINNER":
-            self.current_turn_label.config(
-                text = f"{self.current_game.get_winner().get_color().upper()} IS THE WINNER"
-            )
-        else:
-            self.current_turn_label.config(
-                text = f"THE GAME IS A DRAW"
-            )
+    def set_turn_label(self, text):
+        self.current_turn_label.config(text=text)
             
-            
-    def error_message(self):
-        messagebox.showerror("ERROR", "The Game Board need to have a board Size 3 OR GREATER")
+    def show_error(self, message):
+        messagebox.showerror("ERROR", message)
+
+    # getters
+    def get_board_size(self):
+        return int(self.board_size_entry.get())
+
+    def get_game_mode(self):
+        return self.default_game_mode.get()
+
+    def get_blue_player_type(self):
+        return self.blue_player_type.get()
+
+    def get_blue_letter_type(self):
+        return self.blue_letter_type.get()
+        
+    def get_red_player_type(self):
+        return self.red_player_type.get()
+
+    def get_red_letter_type(self):
+        return self.red_letter_type.get()
