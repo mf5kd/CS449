@@ -1,9 +1,11 @@
 import unittest
 import tkinter as tk
+from unittest.mock import MagicMock, patch 
 from gui import SOSGUI
 from game import Game
 from game_general import General
 from human import Human
+from computer import Computer
 from controller import GameController
 
 class TestGameLogic(unittest.TestCase):
@@ -208,6 +210,61 @@ class TestGameLogic(unittest.TestCase):
 
         game.check_draw()
         self.assertIsNone(game.get_winner())
+
+class TestComputerPlayer(unittest.TestCase):
+    def setUp(self):
+        # Initialize computer player
+        self.computer = Computer(2, "red")
+        self.board_size = 3
+        # Create empty 3x3 board
+        self.empty_board = [[" " for _ in range(3)] for _ in range(3)]
+
+    # Random Move (No API / Fallback)
+    def test_computer_fallback_random_move(self):
+        # Force model to None to simulate missing API key or init failure
+        self.computer.model = None 
+        
+        row, col, symbol = self.computer.make_move(self.empty_board, self.board_size, 1)
+        
+        # Check bounds
+        self.assertTrue(0 <= row < self.board_size, "Row is out of bounds")
+        self.assertTrue(0 <= col < self.board_size, "Column is out of bounds")
+        # Check symbol
+        self.assertIn(symbol, ['S', 'O'], "Symbol must be S or O")
+
+    # Valid LLM Move
+    def test_computer_llm_valid_move(self):
+        # Create a Mock model
+        mock_model = MagicMock()
+        mock_response = MagicMock()
+        
+        # Simulate LLM returning "1, 1, S"
+        mock_response.text = "1, 1, S" 
+        mock_model.generate_content.return_value = mock_response
+        
+        # Inject mock model into computer
+        self.computer.model = mock_model
+        
+        row, col, symbol = self.computer.make_move(self.empty_board, self.board_size, 1)
+        
+        self.assertEqual(row, 1)
+        self.assertEqual(col, 1)
+        self.assertEqual(symbol, 'S')
+
+    # LLM Error/Crash Recovery
+    def test_computer_recovers_from_llm_error(self):
+        mock_model = MagicMock()
+        # Make the generate_content method raise an error
+        mock_model.generate_content.side_effect = Exception("API Connection Failed")
+        
+        self.computer.model = mock_model
+        
+        # Attempt move - should not crash
+        row, col, symbol = self.computer.make_move(self.empty_board, self.board_size, 1)
+        
+        # Should return a valid random move instead
+        self.assertTrue(0 <= row < self.board_size)
+        self.assertIn(symbol, ['S', 'O'])
 
 if __name__ == '__main__':
     unittest.main()
