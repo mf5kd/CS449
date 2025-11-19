@@ -89,25 +89,26 @@ class GameController:
 
         current_player = self.current_game.get_current_player()
         game_mode = self.view.get_game_mode()
-        
-        if current_player == self.blue_player:
-            symbol_type = self.view.get_blue_letter_type()
-        else:
-            symbol_type = self.view.get_red_letter_type()
-        current_player.set_symbol(symbol_type)
 
-        row, column = current_player.make_move(
-            self.current_game.game_board, 
-            self.current_game.board_size,
-            game_mode
-        )
+        try:
+            row, column, chosen_symbol = current_player.make_move(
+                self.current_game.game_board, 
+                self.current_game.board_size,
+                game_mode
+            )
 
-        move_made = self.current_game.player_move(row, column)
-        
-        if move_made:
-            self._check_and_update_game_state(row, column)
-        else:
-            print(f"Computer made an invalid move: ({row}, {column})")
+            current_player.symbol = chosen_symbol 
+
+            move_made = self.current_game.player_move(row, column)
+            
+            if move_made:
+                self._check_and_update_game_state(row, column)
+            else:
+                print(f"Computer made an invalid move: ({row}, {column})")
+                self.end_game("ERROR")
+                
+        except Exception as e:
+            print(f"Critical error in computer turn: {e}")
             self.end_game("ERROR")
 
     def _check_and_update_game_state(self, row, column):

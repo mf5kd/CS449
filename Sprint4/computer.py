@@ -42,12 +42,12 @@ class Computer(Player):
             f"You are playing the board game SOS. You are the {self.color} player.\n"
             f"The board size is {board_size}x{board_size}.\n"
             f"Game Mode: {mode_str}.\n"
-            f"Your current symbol to place is: '{self.symbol}'.\n\n"
             f"Current Board State (Empty spots are '_'):\n{board_str}\n"
             "Rules:\n"
             "- You must select an empty spot (marked as '_').\n"
+            "- You must CHOOSE to place either 'S' or 'O'.\n"
             "- You want to form the sequence 'S-O-S' orthogonally or diagonally.\n"
-            "- Return ONLY the row and column number as a comma-separated pair (e.g., '0, 2').\n"
+            "- Return ONLY the row, column, and symbol separated by commas (e.g., '0, 2, S').\n"
             "- Rows and Columns are 0-indexed.\n"
             "Move:"
         )
@@ -57,14 +57,15 @@ class Computer(Player):
         text_response = response.text.strip()
         print(f"LLM Raw Response: {text_response}")
 
-        match = re.search(r"(\d+)\s*,\s*(\d+)", text_response)
+        match = re.search(r"(\d+)\s*,\s*(\d+)\s*,\s*([sSoO])", text_response)
         if match:
-            row, col = int(match.group(1)), int(match.group(2))
-            
+            row = int(match.group(1))
+            col = int(match.group(2))
+            symbol = match.group(3).upper() # Ensure it is uppercase
 
             if 0 <= row < board_size and 0 <= col < board_size:
                 if game_board[row][col] == " ":
-                    return row, col
+                    return row, col, symbol
                 else:
                     print(f"LLM suggested occupied spot: {row}, {col}")
             else:
@@ -80,5 +81,8 @@ class Computer(Player):
                     empty_spots.append((r, c))
         
         if empty_spots:
-            return random.choice(empty_spots)
-        return -1, -1  
+            r, c = random.choice(empty_spots)
+            symbol = random.choice(['S', 'O'])
+            return r, c, symbol
+            
+        return -1, -1, 'S'
