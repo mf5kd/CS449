@@ -198,6 +198,22 @@ class SOSGUI:
             for button in row:
                 button.config(state=tk.DISABLED)
 
+    def enable_board(self):
+        """Enables only the empty cells for the human player to click."""
+        game = self.controller.current_game
+        if not game: return
+        
+        game_board = game.game_board
+        
+        for r in range(self.board_size):
+            for c in range(self.board_size):
+                button = self.game_spaces[r][c]
+                if game_board[r][c] == " ":
+                    button.config(state=tk.NORMAL)
+                else:
+                    # Keep occupied cells disabled
+                    button.config(state=tk.DISABLED)
+
     def set_turn_label(self, text):
         self.current_turn_label.config(text=text)
             

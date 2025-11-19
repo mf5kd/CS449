@@ -1,6 +1,7 @@
 from game import Game
 from game_general import General
 from human import Human
+from computer import Computer
 
 class GameController:
     def __init__(self):
@@ -20,8 +21,18 @@ class GameController:
             
             game_mode = self.view.get_game_mode()
             
-            self.blue_player = Human(1, "blue")
-            self.red_player = Human(2, "red")
+            blue_player_type = self.view.get_blue_player_type()
+            red_player_type = self.view.get_red_player_type()
+
+            if blue_player_type == 1:
+                self.blue_player = Human(1, "blue")
+            else:
+                self.blue_player = Computer(1, "blue")
+
+            if red_player_type == 1:
+                self.red_player = Human(2, "red")
+            else:
+                self.red_player = Computer(2, "red")
 
             if game_mode == 1:
                 self.current_game = Game(self.blue_player, self.red_player, board_size)
@@ -33,11 +44,17 @@ class GameController:
                 f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
             )
 
+            if isinstance(self.current_game.get_current_player(), Computer):
+                    self.handle_computer_turn()
+                
         except ValueError as e:
             self.view.show_error(f"Invalid Input: {e}")
 
     def handle_board_click(self, row, column):
         if not self.current_game:
+            return
+            
+        if not isinstance(self.current_game.get_current_player(), Human):
             return
 
         blue_letter = self.view.get_blue_letter_type()
@@ -51,6 +68,49 @@ class GameController:
         if not move_made:
             return
 
+        self._check_and_update_game_state(row, column)
+        
+    def end_game(self, end_type):
+        self.view.disable_board()
+        if end_type == "WINNER":
+            self.view.set_turn_label(
+                f"{self.current_game.get_winner().get_color().upper()} IS THE WINNER"
+            )
+        elif end_type == "DRAW":
+            self.view.set_turn_label("THE GAME IS A DRAW")
+        else:
+            self.view.set_turn_label("GAME ENDED DUE TO ERROR (COMPUTER INVALID MOVE)")
+
+
+    def handle_computer_turn(self):
+        self.view.disable_board()
+        self.view.set_turn_label("COMPUTER IS THINKING...")
+        self.view.root.update()
+
+        current_player = self.current_game.get_current_player()
+        game_mode = self.view.get_game_mode()
+        
+        if current_player == self.blue_player:
+            symbol_type = self.view.get_blue_letter_type()
+        else:
+            symbol_type = self.view.get_red_letter_type()
+        current_player.set_symbol(symbol_type)
+
+        row, column = current_player.make_move(
+            self.current_game.game_board, 
+            self.current_game.board_size,
+            game_mode
+        )
+
+        move_made = self.current_game.player_move(row, column)
+        
+        if move_made:
+            self._check_and_update_game_state(row, column)
+        else:
+            print(f"Computer made an invalid move: ({row}, {column})")
+            self.end_game("ERROR")
+
+    def _check_and_update_game_state(self, row, column):
         game_mode = self.view.get_game_mode()
         is_win = self.current_game.check_win()
         is_draw = self.current_game.check_draw()
@@ -69,15 +129,11 @@ class GameController:
             return
 
         self.current_game.change_player()
-        self.view.set_turn_label(
-            f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
-        )
         
-    def end_game(self, end_type):
-        self.view.disable_board()
-        if end_type == "WINNER":
-            self.view.set_turn_label(
-                f"{self.current_game.get_winner().get_color().upper()} IS THE WINNER"
-            )
+        if isinstance(self.current_game.get_current_player(), Computer):
+            self.view.root.after(500, self.handle_computer_turn)
         else:
-            self.view.set_turn_label("THE GAME IS A DRAW")
+            self.view.set_turn_label(
+                f"IT IS {self.current_game.get_current_player().get_color().upper()} TURN"
+            )
+            self.view.enable_board()
