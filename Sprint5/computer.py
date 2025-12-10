@@ -1,7 +1,8 @@
 import os
 import random
 import re
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from player import Player
 
 class Computer(Player):
@@ -9,19 +10,18 @@ class Computer(Player):
         super().__init__(symbol, color)
 
         self.api_key = os.getenv("GOOGLE_API_KEY")
-        self.model = None
+        self.client = None
         
         if self.api_key:
             try:
-                genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-2.0-flash')
+                self.client = genai.Client(api_key = self.api_key)
             except Exception as e:
                 print(f"Error configuring Google API: {e}")
         else:
             print("Warning: GOOGLE_API_KEY not found. Computer will play randomly.")
 
     def make_move(self, game_board, board_size, game_mode):
-        if self.model:
+        if self.client:
             try:
                 return self._get_llm_move(game_board, board_size, game_mode)
             except Exception as e:
@@ -53,7 +53,14 @@ class Computer(Player):
         )
 
 
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model = "gemini-2.5-flash-lite",
+            contents = prompt,
+            config = types.GenerateContentConfig(
+                temperature = 0.0
+            )
+        )
+
         text_response = response.text.strip()
         print(f"LLM Raw Response: {text_response}")
 
