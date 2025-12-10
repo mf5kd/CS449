@@ -21,7 +21,7 @@ class SOSGUI:
         self.blue_letter_type = tk.IntVar()
         self.red_player_type = tk.IntVar()
         self.red_letter_type = tk.IntVar()
-
+        self.record_game = tk.IntVar()
         
         self.create_widgets()
         
@@ -114,13 +114,13 @@ class SOSGUI:
         bottom_frame = tk.Frame(main_frame, border=1, borderwidth=10, relief="groove")
         bottom_frame.pack(side="bottom", fill="x")
 
-        record_game_check_button = tk.Checkbutton(bottom_frame, text="Record Game")
+        record_game_check_button = tk.Checkbutton(bottom_frame, text="Record Game", variable=self.record_game)
         record_game_check_button.pack(side="top")
 
         self.current_turn_label = tk.Label(bottom_frame, text="PRESS 'NEW GAME' TO START", )
         self.current_turn_label.pack(side="top")
 
-        replay_game_button = tk.Button(bottom_frame, text="Replay Game", background="light gray")
+        replay_game_button = tk.Button(bottom_frame, text="Replay Game", background="light gray", command=self.controller.replay_game)
         replay_game_button.pack(side="top")
 
         new_game_button = tk.Button(bottom_frame, text="New Game", background="light gray", command=self.controller.start_new_game)
@@ -238,3 +238,7 @@ class SOSGUI:
 
     def get_red_letter_type(self):
         return self.red_letter_type.get()
+    
+    def get_is_recording(self):
+        return self.record_game.get() == 1
+    
